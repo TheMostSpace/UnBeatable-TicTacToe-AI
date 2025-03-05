@@ -1,0 +1,3 @@
+} else if (availSpots.length === 0) {
+    return { score: 10 };
+}
