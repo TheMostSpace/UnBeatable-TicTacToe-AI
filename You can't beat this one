@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe - Unbeatable AI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+    }
+    .cell {
+      background: #fff;
+      border: 1px solid #ccc;
+      font-size: 3em;
+      text-align: center;
+      line-height: 100px;
+      cursor: pointer;
+      user-select: none;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 15px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe - Unbeatable AI</h1>
+  <div id="board"></div>
+  <div id="message"></div>
+  <button id="resetBtn">Restart Game</button>
+
+  <script>
+    // Game Variables
+    const boardEl = document.getElementById("board");
+    const messageEl = document.getElementById("message");
+    const resetBtn = document.getElementById("resetBtn");
+    let board = Array(9).fill("");
+    let currentPlayer = "X"; // Human is "X", AI is "O"
+    let gameOver = false;
+
+    // Render the board
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      board.forEach((cell, i) => {
+        const cellEl = document.createElement("div");
+        cellEl.classList.add("cell");
+        cellEl.dataset.index = i;
+        cellEl.textContent = cell;
+        cellEl.addEventListener("click", handleCellClick);
+        boardEl.appendChild(cellEl);
+      });
+    }
+
+    // Handle a human move when a cell is clicked
+    function handleCellClick(e) {
+      const index = e.target.dataset.index;
+      if (board[index] !== "" || gameOver || currentPlayer !== "X") return;
+      board[index] = "X";
+      renderBoard();
+      if (checkWinner(board, "X")) {
+        messageEl.textContent = "You win!";
+        gameOver = true;
+        return;
+      }
+      if (board.every(cell => cell !== "")) {
+        messageEl.textContent = "It's a tie!";
+        gameOver = true;
+        return;
+      }
+      currentPlayer = "O";
+      // Let AI make its move after a short delay
+      setTimeout(() => {
+        const aiIndex = bestMove(board);
+        board[aiIndex] = "O";
+        renderBoard();
+        if (checkWinner(board, "O")) {
+          messageEl.textContent = "AI wins! You lose.";
+          gameOver = true;
+          return;
+        }
+        if (board.every(cell => cell !== "")) {
+          messageEl.textContent = "It's a tie!";
+          gameOver = true;
+          return;
+        }
+        currentPlayer = "X";
+      }, 500);
+    }
+
+    // Check for a winner based on winning patterns
+    function checkWinner(b, player) {
+      const winPatterns = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+      ];
+      return winPatterns.some(pattern => pattern.every(index => b[index] === player));
+    }
+
+    // Minimax algorithm for evaluating moves
+    function minimax(newBoard, player) {
+      const availSpots = newBoard
+        .map((cell, index) => cell === "" ? index : null)
+        .filter(val => val !== null);
+
+      if (checkWinner(newBoard, "X")) {
+        return { score: -10 };
+      } else if (checkWinner(newBoard, "O")) {
+        return { score: 10 };
+      } else if (availSpots.length === 0) {
+        return { score: 0 };
+      }
+
+      const moves = [];
+      for (let i = 0; i < availSpots.length; i++) {
+        let move = {};
+        move.index = availSpots[i];
+        newBoard[availSpots[i]] = player;
+        
+        if (player === "O") {
+          const result = minimax(newBoard, "X");
+          move.score = result.score;
+        } else {
+          const result = minimax(newBoard, "O");
+          move.score = result.score;
+        }
+        newBoard[availSpots[i]] = "";
+        moves.push(move);
+      }
+      
+      let bestMove;
+      if (player === "O") {
+        let bestScore = -Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score > bestScore) {
+            bestScore = moves[i].score;
+            bestMove = moves[i];
+          }
+        }
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score < bestScore) {
+            bestScore = moves[i].score;
+            bestMove = moves[i];
+          }
+        }
+      }
+      return bestMove;
+    }
+
+    // Determine the best move for the AI using minimax
+    function bestMove(board) {
+      return minimax(board, "O").index;
+    }
+
+    // Reset game button handler
+    resetBtn.addEventListener("click", () => {
+      board = Array(9).fill("");
+      currentPlayer = "X";
+      gameOver = false;
+      messageEl.textContent = "";
+      renderBoard();
+    });
+
+    // Initial render
+    renderBoard();
+  </script>
+</body>
+</html>
